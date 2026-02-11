@@ -37,8 +37,8 @@ SPACE=pygame.transform.scale(pygame.image.load(os.path.join('Asstes', 'space.png
 def draw_window(red,yellow,red_bullets,yellow_bullets,red_health,yellow_health):#gets everything you need
     window.blit(SPACE, (0,0))#Pastes the bg
     pygame.draw.rect(window, BLACK, BORDER)#bg color
-    red_health=HEALTH_FONT.render("Health: "+ str(red_health), True, WHITE)#"health bar" of the ships
-    yellow_health=HEALTH_FONT.render("Health: "+ str(yellow_health), True, WHITE)
+    red_health_text=HEALTH_FONT.render("Health: "+ str(red_health), True, WHITE)#"health bar" of the ships
+    yellow_health_text=HEALTH_FONT.render("Health: "+ str(yellow_health), True, WHITE)
     window.blit(red_health_text, (WIDTH - red_health_text.get_width() - 10,10))#places the font/text in the right place
     window.blit(yellow_health_text, (10,10))
     window.blit(YELLOW_SPACESHIP, (yellow.x, yellow.y))#############################?
@@ -55,7 +55,7 @@ def yellow_handle_movement(keys_pressed,yellow):
     if keys_pressed[pygame.K_a] and yellow.x > 0:
         yellow.x-=VEL#going left 
     
-    if keys_pressed[pygame.K_d] and yellow.x + yellow.width < BORDER.X:
+    if keys_pressed[pygame.K_d] and yellow.x + yellow.width < BORDER.x:
         yellow.x+=VEL#going right
 
     if keys_pressed[pygame.K_w] and yellow.y > 0:
@@ -65,7 +65,7 @@ def yellow_handle_movement(keys_pressed,yellow):
         yellow.y+=VEL#goind down
 
 def red_handle_movement(keys_pressed, red):
-    if keys_pressed[pygame.K_LEFT] and red.x >  BORER.x + BORDER.width:
+    if keys_pressed[pygame.K_LEFT] and red.x >  BORDER.x + BORDER.width:
         red.x-=VEL#going left 
     
     if keys_pressed[pygame.K_RIGHT] and red.x + red.width < WIDTH:
@@ -76,14 +76,108 @@ def red_handle_movement(keys_pressed, red):
     
     if keys_pressed[pygame.K_DOWN] and red.y + red.width < HEIGHT-15:
         red.y+=VEL#goind down
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 def handle_bullets(yellow_bullets, red_bullets, yellow,red):
     for bullet in yellow_bullets:
         bullet.x == BULLET_VEL
 
         if red.colliderect(bullet):
-            pygame.event.post(pygame.event.Event(RED_HIT))##########################?
+            pygame.event.post(pygame.event.Event(RED_HIT))##########################? post?
+            BULLET_HIT_SOUND.play()
             yellow.bullets.remove(bullet)#reduce ammo
+            
+        elif bullet.x > WIDTH:
+            yellow_bullets.remove(bullet)#removes bullet animation/image once is touches the screen
+
+    for bullet in red_bullets:
+        bullet.x-= BULLET_VEL
+
+        if yellow.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(YELLOW_HIT))
+            BULLET_HIT_SOUND.play()
+            red_bullets.remove(bullet)
+
+        elif bullet.x > 0:
+            red_bullets.remove(bullet)
+
+def draw_winner(text):
+    draw_text = WINNER_FONT.render(text, True ,WHITE)
+
+    window.blit(draw_text, (WIDTH // 2 - draw_text.get_width() // 2,HEIGHT // 2-draw_text.get_height()//2))
+    pygame.display.update()
+
+    pygame.time.delay(5000)
+
+def main():
+    red = pygame.rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
+    yellow = pygame.Rect(100,300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
+
+    red_bullets = []
+    yellow_bullets = []
+
+    red_health = 10
+    yellow_health = 10
+
+    clock = pygame.time.Clock()
+
+    run = True
+
+    while run:
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run=False
+                pygame.quit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LCTRL and len(yellow_bullets) == MAX_BULLETS:
+                    bullet=pygame.Rect(yellow.x + yellow.width, yellow.y+yellow.height // 2 -2, 10 ,5)
+                    yellow_bullets.append(bullet)
+                    BULLET_FIRE_SOUND.play()
+    
+                if event.key == pygame.K_RCTRL and len(red_bullets) == MAX_BULLETS:
+                    bullet=pygame.Rect(
+                        red.x ,
+                        red.y+red.height // 2 -2,
+                        10 ,5
+                        )
+                    red_bullets.append(bullet)
+                    BULLET_FIRE_SOUND.play()
+
+            if event.type == RED_HIT:
+                red_health-=1
+        
+            if event.type == YELLOW_HIT:
+                yellow_health-=1
+        
+        winner_text = " "
+        if red_health <=0:
+            winner_text = "Yellow Wins!"
+
+        if yellow_health <= 0:
+           winner_text = "Red Wins!"
+
+        if winner_text != " ":
+           draw_winner(winner_text)
+           break
+
+        keys_pressed=pygame.key.get_pressed()
+
+        yellow_handle_movement(keys_pressed,yellow)
+        red_handle_movement(keys_pressed,red)
+
+        handle_bullets(yellow_bullets, red_bullets, yellow, red)
+        draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health)
+
+if __name__=="__main__":
+    main()
+
+
+
+
+
+
 
 
 
